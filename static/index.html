@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Kara</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <div class="app">
+
+    <!-- LOGIN -->
+    <section id="view-login" class="view view-center">
+      <div class="card card-paper login-card">
+        <div class="stamp-mark">TK</div>
+        <h1 class="title-serif">Test Kara</h1>
+        <p class="subtitle">Tizimga kirish uchun ma'lumotlaringizni kiriting</p>
+
+        <form id="login-form">
+          <label class="field-label" for="username">Foydalanuvchi nomi</label>
+          <input class="input" type="text" id="username" autocomplete="username" required>
+
+          <label class="field-label" for="password">Parol</label>
+          <input class="input" type="password" id="password" autocomplete="current-password" required>
+
+          <button type="submit" class="btn btn-primary btn-block" id="login-btn">Kirish</button>
+          <p class="error-text" id="login-error"></p>
+        </form>
+
+        <p class="switch-text">
+          Hisobingiz yo'qmi? <a href="#" id="go-register-link">Ro'yxatdan o'tish</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section id="view-register" class="view view-center hidden">
+      <div class="card card-paper login-card">
+        <div class="stamp-mark">TK</div>
+        <h1 class="title-serif">Ro'yxatdan o'tish</h1>
+        <p class="subtitle">Yangi hisob yaratish uchun ma'lumot kiriting</p>
+
+        <form id="register-form">
+          <label class="field-label" for="reg-username">Foydalanuvchi nomi</label>
+          <input class="input" type="text" id="reg-username" autocomplete="username" required minlength="3">
+
+          <label class="field-label" for="reg-password">Parol</label>
+          <input class="input" type="password" id="reg-password" autocomplete="new-password" required minlength="5">
+
+          <label class="field-label" for="reg-password2">Parolni tasdiqlang</label>
+          <input class="input" type="password" id="reg-password2" autocomplete="new-password" required minlength="5">
+
+          <button type="submit" class="btn btn-primary btn-block" id="register-btn">Ro'yxatdan o'tish</button>
+          <p class="error-text" id="register-error"></p>
+          <p class="success-text" id="register-success"></p>
+        </form>
+
+        <p class="switch-text">
+          Hisobingiz bormi? <a href="#" id="go-login-link">Kirish</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- HOME -->
+    <section id="view-home" class="view view-center hidden">
+      <div class="card card-paper home-card">
+        <div class="home-header">
+          <div>
+            <p class="eyebrow">Xush kelibsiz</p>
+            <h1 class="title-serif" id="home-username">Foydalanuvchi</h1>
+          </div>
+          <button class="btn btn-ghost" id="logout-btn">Chiqish</button>
+        </div>
+
+        <div class="home-stats" id="home-stats">
+          <div class="stat-box">
+            <span class="stat-label">Savollar soni</span>
+            <span class="stat-value">20</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Rejim</span>
+            <span class="stat-value">Random</span>
+          </div>
+        </div>
+
+        <button class="btn btn-brass btn-block btn-large" id="start-test-btn">
+          Testni boshlash
+        </button>
+        <p class="error-text" id="home-error"></p>
+      </div>
+    </section>
+
+    <!-- TEST -->
+    <section id="view-test" class="view hidden">
+      <div class="test-wrap">
+
+        <div class="sheet-strip" id="progress-strip"></div>
+
+        <div class="card card-paper question-card">
+          <p class="question-index" id="question-index">Savol 1 / 20</p>
+          <h2 class="question-text" id="question-text">Savol matni shu yerda chiqadi</h2>
+
+          <div class="choices" id="choices-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULT -->
+    <section id="view-result" class="view view-center hidden">
+      <div class="card card-paper result-card">
+        <div class="result-stamp" id="result-stamp">O'TDI</div>
+        <h1 class="title-serif">Test yakunlandi</h1>
+
+        <div class="result-score">
+          <span class="result-number" id="result-score">0</span>
+          <span class="result-total" id="result-total">/ 20</span>
+        </div>
+        <p class="result-percentage" id="result-percentage">0%</p>
+
+        <button class="btn btn-brass btn-block" id="restart-btn">Yana urinish</button>
+        <button class="btn btn-ghost btn-block" id="home-btn">Bosh sahifaga qaytish</button>
+      </div>
+    </section>
+
+  </div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
