@@ -266,6 +266,47 @@ html, body {
   margin-bottom: 20px;
 }
 
+.timer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--ink-soft);
+  border: 1px solid #2B3050;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.timer-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-on-ink-muted);
+}
+
+.timer-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-on-ink);
+  letter-spacing: 0.03em;
+}
+
+.timer-bar.warning .timer-value {
+  color: var(--brass);
+}
+
+.timer-bar.danger .timer-value {
+  color: var(--incorrect);
+  animation: pulse-danger 1s infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 .bubble {
   width: 26px; height: 26px;
   border-radius: 50%;

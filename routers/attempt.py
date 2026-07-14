@@ -1,8 +1,10 @@
-# routers/attempt.py
 import random
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+
 import models, schemas
 from database import get_db
 from auth import get_current_user
@@ -10,6 +12,18 @@ from auth import get_current_user
 router = APIRouter(prefix="/attempts", tags=["attempts"])
 
 QUESTIONS_PER_TEST = 20
+TEST_DURATION_MINUTES = 20  # butun test uchun umumiy vaqt
+
+
+def _expires_at(attempt: models.Attempt) -> datetime:
+    started = attempt.started_at
+    if started.tzinfo is None:
+        started = started.replace(tzinfo=timezone.utc)
+    return started + timedelta(minutes=TEST_DURATION_MINUTES)
+
+
+def _is_expired(attempt: models.Attempt) -> bool:
+    return datetime.now(timezone.utc) > _expires_at(attempt)
 
 
 @router.post("/start", response_model=dict)
@@ -18,7 +32,6 @@ def start_attempt(db: Session = Depends(get_db), user: models.User = Depends(get
     if total_questions < QUESTIONS_PER_TEST:
         raise HTTPException(400, "Bazada yetarli savol yo'q")
 
-    # random 20 ta savol tanlaymiz (PostgreSQL uchun samarali usul)
     random_questions = (
         db.query(models.Question)
         .order_by(func.random())
@@ -31,7 +44,6 @@ def start_attempt(db: Session = Depends(get_db), user: models.User = Depends(get
     db.commit()
     db.refresh(attempt)
 
-    # tanlangan savollarni shu attempt'ga biriktiramiz
     for index, question in enumerate(random_questions, start=1):
         db.add(models.AttemptQuestion(
             attempt_id=attempt.id,
@@ -40,7 +52,13 @@ def start_attempt(db: Session = Depends(get_db), user: models.User = Depends(get
         ))
     db.commit()
 
-    return {"attempt_id": attempt.id, "total_questions": QUESTIONS_PER_TEST}
+    return {
+        "attempt_id": attempt.id,
+        "total_questions": QUESTIONS_PER_TEST,
+        "duration_minutes": TEST_DURATION_MINUTES,
+        "started_at": attempt.started_at.replace(tzinfo=timezone.utc).isoformat(),
+        "expires_at": _expires_at(attempt).isoformat(),
+    }
 
 
 @router.get("/{attempt_id}/questions", response_model=list[schemas.QuestionOut])
@@ -53,7 +71,6 @@ def get_attempt_questions(
     if not attempt:
         raise HTTPException(404, "Attempt topilmadi")
 
-    # shu attempt'ga biriktirilgan savollarni tartib bo'yicha olamiz
     questions = (
         db.query(models.Question)
         .join(models.AttemptQuestion, models.AttemptQuestion.question_id == models.Question.id)
@@ -75,7 +92,10 @@ def submit_answer(
     if not attempt:
         raise HTTPException(404, "Attempt topilmadi")
 
-    # savol shu attempt'ga tegishlimi tekshiramiz (boshqa savolga javob berib yubormasin)
+    # VAQT TEKSHIRUVI — server-side, chetlab o'tib bo'lmaydi
+    if _is_expired(attempt):
+        raise HTTPException(400, "Test vaqti tugagan")
+
     belongs = db.query(models.AttemptQuestion).filter_by(
         attempt_id=attempt_id, question_id=payload.question_id
     ).first()

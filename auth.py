@@ -1,32 +1,29 @@
-# auth.py
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+
 import models
 from database import get_db
 
-
-# --- Sozlamalar ---
-# Productionda bu qiymatni albatta .env fayldan olish kerak!
 SECRET_KEY = "9vbPhiJSUml7mlD7qgGNh6K2"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 kun
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 
-# --- Parol funksiyalari ---
+# --- Parol funksiyalari (endi passlib emas, to'g'ridan-to'g'ri bcrypt) ---
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 # --- Token yaratish ---
@@ -39,7 +36,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-# --- Joriy foydalanuvchini olish (dependency) ---
+# --- Joriy foydalanuvchini olish ---
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),

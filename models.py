@@ -2,6 +2,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime, timezone
+
 
 class User(Base):
     __tablename__ = "users"
@@ -27,7 +29,7 @@ class Attempt(Base):
     __tablename__ = "attempts"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    started_at = Column(DateTime, server_default=func.now())
+    started_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     score = Column(Integer, default=0)
     total = Column(Integer, default=0)
 

@@ -8,6 +8,8 @@ const state = {
   currentIndex: 0,
   answers: {},      // question_id -> { choiceId, isCorrect, correctChoiceId }
   isBusy: false,     // javob yuborilayotganda / o'tish animatsiyasida bubble bosilmasin
+  expiresAt: null,   // Date obyekti — test tugash vaqti
+  timerInterval: null,
 };
 
 // ---------- Ko'rinishlarni almashtirish ----------
@@ -152,6 +154,7 @@ async function startTest() {
   try {
     const startData = await api("/attempts/start", { method: "POST" });
     state.attemptId = startData.attempt_id;
+    state.expiresAt = new Date(startData.expires_at);
 
     const questions = await api(`/attempts/${state.attemptId}/questions`);
     state.questions = questions;
@@ -161,6 +164,7 @@ async function startTest() {
 
     renderProgressStrip();
     renderQuestion();
+    startTimer();
     showView("test");
   } catch (err) {
     errorEl.textContent = err.message;
@@ -168,6 +172,48 @@ async function startTest() {
     btn.disabled = false;
     btn.textContent = "Testni boshlash";
   }
+}
+
+// ---------- Taymer ----------
+function startTimer() {
+  stopTimer(); // ehtiyot uchun, eski interval qolib ketmasin
+  updateTimerDisplay();
+  state.timerInterval = setInterval(updateTimerDisplay, 1000);
+}
+
+function stopTimer() {
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+}
+
+function updateTimerDisplay() {
+  if (!state.expiresAt) return;
+
+  const remainingMs = state.expiresAt.getTime() - Date.now();
+  const timerEl = document.getElementById("timer-value");
+  const barEl = document.getElementById("timer-bar");
+
+  if (remainingMs <= 0) {
+    timerEl.textContent = "00:00";
+    stopTimer();
+    disableAllChoices();
+    finishTest();
+    return;
+  }
+
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  timerEl.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+  barEl.classList.toggle("warning", totalSeconds <= 300 && totalSeconds > 60);
+  barEl.classList.toggle("danger", totalSeconds <= 60);
+}
+
+function disableAllChoices() {
+  document.querySelectorAll(".choice-btn").forEach((b) => (b.disabled = true));
 }
 
 // ---------- Progress strip (scantron) ----------
@@ -319,6 +365,10 @@ async function submitAnswer(question, choice, clickedBtn) {
       goToNextQuestion();
     }, 1100);
   } catch (err) {
+    if (err.message === "Test vaqti tugagan") {
+      finishTest();
+      return;
+    }
     alert(err.message);
     allBtns.forEach((b) => (b.disabled = false));
     state.isBusy = false;
@@ -345,6 +395,7 @@ function goToNextQuestion() {
 
 // ---------- Testni yakunlash ----------
 async function finishTest() {
+  stopTimer();
   try {
     const result = await api(`/attempts/${state.attemptId}/result`);
     showResult(result);
@@ -367,7 +418,7 @@ function showResult(result) {
   document.getElementById("result-percentage").textContent = result.percentage + "%";
 
   const stamp = document.getElementById("result-stamp");
-  const passed = result.percentage >= 60;
+  const passed = result.percentage >= 80;
   stamp.textContent = passed ? "O'TDI" : "QAYTA URINING";
   stamp.classList.toggle("fail", !passed);
 
